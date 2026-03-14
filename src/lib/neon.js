@@ -2,6 +2,10 @@ import { neon } from '@neondatabase/serverless'
 
 const databaseUrl = import.meta.env.VITE_NEON_DATABASE_URL || ''
 
+if (!databaseUrl) {
+  console.warn('[leaderboard] VITE_NEON_DATABASE_URL not set — using localStorage fallback')
+}
+
 const sql = databaseUrl ? neon(databaseUrl) : null
 
 export const db = sql
