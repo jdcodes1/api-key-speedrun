@@ -4,7 +4,7 @@ const databaseUrl = import.meta.env.VITE_NEON_DATABASE_URL || ''
 
 const sql = databaseUrl ? neon(databaseUrl) : null
 
-export const supabase = sql // reuse export name so App.jsx check still works
+export const db = sql
 
 export async function fetchLeaderboard() {
   if (!sql) return []

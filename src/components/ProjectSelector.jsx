@@ -1,13 +1,5 @@
 import { useState, useMemo } from 'react'
-
-function shuffle(arr) {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
+import { shuffle } from '../lib/utils'
 
 const allProjects = [
   'my-project-1', 'my-project-01', 'my-project-1-dev', 'my-project-1-staging',
@@ -28,7 +20,6 @@ const orgs = ['My Organization', 'Other Org', 'Personal', 'Shared Org']
 export default function ProjectSelector({ open, onSelect, addToast }) {
   const { projects, correctId, recentProjects, starredProjects } = useMemo(() => {
     const shuffled = shuffle(allProjects)
-    // Pick a random project as the correct one
     const correctIdx = Math.floor(Math.random() * shuffled.length)
     const correct = shuffled[correctIdx]
     const projectList = shuffled.map(id => ({
@@ -36,16 +27,14 @@ export default function ProjectSelector({ open, onSelect, addToast }) {
       name: id,
       org: orgs[Math.floor(Math.random() * orgs.length)]
     }))
-    // Recent tab: 5 random projects, none correct
     const wrongOnes = projectList.filter(p => p.id !== correct)
     const recent = shuffle(wrongOnes).slice(0, 5)
-    // Starred tab: 4 random wrong projects
     const starred = shuffle(wrongOnes.filter(p => !recent.includes(p))).slice(0, 4)
     return { projects: projectList, correctId: correct, recentProjects: recent, starredProjects: starred }
   }, [])
 
   const [search, setSearch] = useState('')
-  const [tab, setTab] = useState('recent') // recent | starred | all
+  const [tab, setTab] = useState('recent')
 
   if (!open) return null
 
@@ -54,14 +43,14 @@ export default function ProjectSelector({ open, onSelect, addToast }) {
 
   return (
     <div className="bg-white rounded-xl shadow-2xl border border-gborder w-[500px] max-h-[600px] flex flex-col">
-      <div className="p-4 border-b border-gborder">
+      <div className="p-5 border-b border-gborder">
         <h2 className="text-lg font-medium text-gdark mb-3">Select a project</h2>
         <input
           type="text"
           placeholder="Search projects..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full border border-gborder rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gblue"
+          className="w-full border border-gborder rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gblue"
         />
       </div>
 
@@ -70,7 +59,7 @@ export default function ProjectSelector({ open, onSelect, addToast }) {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+            className={`flex-1 py-3 text-sm font-medium transition-colors cursor-pointer ${
               tab === t ? 'text-gblue border-b-2 border-gblue' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -93,14 +82,14 @@ export default function ProjectSelector({ open, onSelect, addToast }) {
                   addToast('APIs not enabled for this project. Select a different project.', 'error')
                 }
               }}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gborder/50 text-left cursor-pointer"
+              className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-blue-50 transition-colors border-b border-gborder/50 text-left cursor-pointer"
             >
               <div className="w-8 h-8 rounded bg-glight flex items-center justify-center text-xs text-gray-500 font-mono">
                 {project.name.slice(-2)}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-gdark truncate">{project.name}</div>
-                <div className="text-xs text-gray-400">{project.org}</div>
+                <div className="text-xs text-gray-400 mt-0.5">{project.org}</div>
               </div>
               <div className="text-xs text-gray-400">ID: {project.id}</div>
             </button>
@@ -108,7 +97,7 @@ export default function ProjectSelector({ open, onSelect, addToast }) {
         )}
       </div>
 
-      <div className="p-3 border-t border-gborder bg-gray-50 text-xs text-gray-400 text-center">
+      <div className="p-4 border-t border-gborder bg-gray-50 text-xs text-gray-400 text-center">
         Only projects with Generative Language API enabled can create API keys.
         <br/>
         <span className="text-gray-300">Hint: Check the "All" tab and scroll carefully.</span>
@@ -116,4 +105,3 @@ export default function ProjectSelector({ open, onSelect, addToast }) {
     </div>
   )
 }
-

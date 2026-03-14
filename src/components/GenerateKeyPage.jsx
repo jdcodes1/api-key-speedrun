@@ -1,21 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
-
-const failureModes = [
-  { message: 'Error: Required field missing. Check all required fields.', recovery: 'checkbox' },
-  { message: 'Error: Quota exceeded for this project. Please wait and retry.', recovery: 'wait' },
-  { message: 'Error: Region unavailable. Retrying with fallback region...', recovery: 'wait' },
-  { message: 'Error: Permission denied. Re-authenticating...', recovery: 'wait' },
-  { message: 'Session expired. Please re-authenticate.', recovery: 'restart' },
-]
-
-function shuffle(arr) {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
+import { useState, useRef, useMemo } from 'react'
 
 const MAX_ATTEMPTS = 5
 
@@ -23,11 +6,7 @@ export default function GenerateKeyPage({ attempts, onGenerate, onRestart, addTo
   const [hiddenCheckbox, setHiddenCheckbox] = useState(false)
   const btnRef = useRef(null)
 
-  // Randomize which paragraph the checkbox appears in
-  const checkboxPosition = useMemo(() => Math.floor(Math.random() * 3), []) // 0, 1, or 2
-
-  // Randomize failure order
-  const failures = useMemo(() => shuffle(failureModes), [])
+  const checkboxPosition = useMemo(() => Math.floor(Math.random() * 3), [])
 
   const handleMouseMove = (e) => {
     if (attempts === 0 && !hiddenCheckbox && btnRef.current) {
@@ -71,17 +50,14 @@ export default function GenerateKeyPage({ attempts, onGenerate, onRestart, addTo
 
           <div className="space-y-6 mb-8">
             <div>
-              <label className="block text-sm font-medium text-gdark mb-1">Key name (optional)</label>
-              <input
-                type="text"
-                defaultValue="Untitled API Key"
-                className="w-full border border-gborder rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gblue"
-              />
+              <label className="block text-sm font-medium text-gdark mb-1.5">Key name (optional)</label>
+              <input type="text" defaultValue="Untitled API Key"
+                className="w-full border border-gborder rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gblue" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gdark mb-1">Application restrictions</label>
-              <select className="w-full border border-gborder rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gblue bg-white">
+              <label className="block text-sm font-medium text-gdark mb-1.5">Application restrictions</label>
+              <select className="w-full border border-gborder rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gblue bg-white">
                 <option>None</option>
                 <option>HTTP referrers (web sites)</option>
                 <option>IP addresses (web servers, cron jobs)</option>
@@ -91,26 +67,22 @@ export default function GenerateKeyPage({ attempts, onGenerate, onRestart, addTo
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gdark mb-1">API restrictions</label>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700">
+              <label className="block text-sm font-medium text-gdark mb-1.5">API restrictions</label>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3.5 text-sm text-green-700">
                 ✓ Generative Language API (configured)
               </div>
             </div>
           </div>
 
-          {/* Fine print with hidden checkbox at randomized position */}
           <div className="mb-6 max-h-32 overflow-y-auto border border-gborder rounded-lg p-4 text-xs text-gray-400 leading-relaxed">
             {finePrintParagraphs.map((text, i) => (
               <div key={i}>
                 <p className={i > 0 ? 'mt-3' : ''}>{text}</p>
                 {i === checkboxPosition && (
                   <label className="flex items-start gap-2 mt-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={hiddenCheckbox}
+                    <input type="checkbox" checked={hiddenCheckbox}
                       onChange={e => setHiddenCheckbox(e.target.checked)}
-                      className="mt-0.5 accent-gblue"
-                    />
+                      className="mt-0.5 accent-gblue" />
                     <span>I acknowledge the above and wish to proceed with key generation.</span>
                   </label>
                 )}
@@ -118,16 +90,15 @@ export default function GenerateKeyPage({ attempts, onGenerate, onRestart, addTo
             ))}
           </div>
 
-          {/* Attempt counter */}
           {attempts > 0 && (
-            <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-700">
+            <div className="mb-5 bg-yellow-50 border border-yellow-200 rounded-lg p-3.5 text-sm text-yellow-700">
               Attempt {attempts + 1} of {MAX_ATTEMPTS}. {attempts >= MAX_ATTEMPTS - 1 ? 'Final attempt!' : 'Previous attempts failed.'}
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-4">
             <button
-              className="text-gray-500 hover:text-gray-700 text-sm cursor-pointer"
+              className="text-gray-500 hover:text-gray-700 text-sm cursor-pointer py-2.5 px-2"
               onClick={() => addToast('You must complete this step to generate the key.', 'warning')}
             >
               Cancel

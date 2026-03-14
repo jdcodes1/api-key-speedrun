@@ -1,16 +1,8 @@
 import { useState } from 'react'
-
-function formatTime(ms) {
-  const seconds = Math.floor(ms / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  const centis = Math.floor((ms % 1000) / 10)
-  return `${minutes}:${String(secs).padStart(2, '0')}.${String(centis).padStart(2, '0')}`
-}
-
-const FAKE_KEY = 'AIzaSy-LMAO-th1s-1s-n0t-r3al-n1c3-try-' + Math.random().toString(36).slice(2, 8)
+import { formatTime } from '../lib/utils'
 
 export default function VictoryScreen({ elapsed, leaderboard, onSaveScore, onPlayAgain }) {
+  const [fakeKey] = useState(() => 'AIzaSy-LMAO-th1s-1s-n0t-r3al-n1c3-try-' + Math.random().toString(36).slice(2, 8))
   const [name, setName] = useState('')
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -25,7 +17,7 @@ export default function VictoryScreen({ elapsed, leaderboard, onSaveScore, onPla
   }
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(FAKE_KEY)
+    navigator.clipboard.writeText(fakeKey)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -137,7 +129,7 @@ export default function VictoryScreen({ elapsed, leaderboard, onSaveScore, onPla
           </div>
           <div className="bg-[#1e1e1e] p-5">
             <code className="text-green-400 text-sm font-mono break-all select-all">
-              {FAKE_KEY}
+              {fakeKey}
             </code>
           </div>
           <div className="bg-gsidebar px-6 py-2 border-t border-gborder">

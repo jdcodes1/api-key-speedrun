@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { formatTime } from '../lib/utils'
 import TopBar from './TopBar'
 import Sidebar from './Sidebar'
 import ProjectSelector from './ProjectSelector'
@@ -25,23 +26,13 @@ import PopupSystem from './PopupSystem'
   → CAPTCHA → EMAIL_VERIFICATION → GENERATE_KEY → VICTORY
 */
 
-function formatTimer(ms) {
-  const seconds = Math.floor(ms / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  const centis = Math.floor((ms % 1000) / 10)
-  return `${minutes}:${String(secs).padStart(2, '0')}.${String(centis).padStart(2, '0')}`
-}
-
 export default function GameScreen({ elapsed, onVictory, addToast }) {
   const [step, setStep] = useState('PROJECT_SELECT')
-  const [showProjectSelector, setShowProjectSelector] = useState(true)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [showCookieBanner, setShowCookieBanner] = useState(true)
   const [loading, setLoading] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
   const [generateAttempts, setGenerateAttempts] = useState(0)
-  const [correctProjectId, setCorrectProjectId] = useState(null)
   const toastInterval = useRef(null)
 
   // Spam random toasts during gameplay
@@ -97,17 +88,7 @@ export default function GameScreen({ elapsed, onVictory, addToast }) {
   }, [step])
 
   const handleProjectSelect = (projectId) => {
-    // ProjectSelector now handles randomization internally
-    // Any projectId passed is accepted — we just store it and proceed
-    // But we need to know if it's the "correct" one
-    // The ProjectSelector calls onSelect only when clicked, we accept it
-    // and store it. The correctness is handled by ProjectSelector's internal state
-    // Since we can't easily get correctId from ProjectSelector,
-    // we'll use a different approach: ProjectSelector always calls onSelect with the clicked id
-    // and GameScreen just accepts it (the ProjectSelector will show error toasts for wrong ones)
-    setCorrectProjectId(projectId)
     doFakeLoad('Switching project...', 3000, () => {
-      setShowProjectSelector(false)
       setStep('SIDEBAR_NAV')
       addToast(`Project selected: ${projectId}`, 'success')
     })
@@ -233,7 +214,7 @@ export default function GameScreen({ elapsed, onVictory, addToast }) {
         return (
           <div className="flex-1 flex items-center justify-center bg-glight">
             <ProjectSelector
-              open={showProjectSelector}
+              open={step === 'PROJECT_SELECT'}
               onSelect={handleProjectSelect}
               addToast={addToast}
             />
@@ -331,7 +312,7 @@ export default function GameScreen({ elapsed, onVictory, addToast }) {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <TopBar
-        timer={formatTimer(elapsed)}
+        timer={formatTime(elapsed)}
         onHamburger={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
       <div className="flex flex-1 overflow-hidden">

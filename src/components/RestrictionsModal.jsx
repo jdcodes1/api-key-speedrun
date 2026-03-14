@@ -1,13 +1,5 @@
 import { useState, useMemo } from 'react'
-
-function shuffle(arr) {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
+import { shuffle } from '../lib/utils'
 
 const baseApis = [
   'Abusive Experience Report API', 'Accelerated Mobile Pages (AMP) URL API',
@@ -46,8 +38,7 @@ const baseApis = [
   'Document AI API', 'Domains API',
   'Essential Contacts API', 'Eventarc API',
   'Firebase Cloud Messaging API', 'Firebase Rules API',
-  'Firestore API',
-  'Genomics API',
+  'Firestore API', 'Genomics API',
   'Google Chat API', 'Google Classroom API',
   'Google Drive API', 'Google Maps API',
   'Google Sheets API', 'IAM API',
@@ -63,7 +54,6 @@ const baseApis = [
   'Web Security Scanner API', 'Workflows API',
 ]
 
-// Pool of correct API names — one is randomly chosen each run
 const correctApiPool = [
   'Generative Language API',
   'Generative Language API v2',
@@ -72,14 +62,9 @@ const correctApiPool = [
   'PaLM Language API',
 ]
 
-// Deprecated Gemini-related decoys
 const geminiDecoys = [
-  'Gemini API',
-  'Gemini API (Legacy)',
-  'Gemini Pro API',
-  'Gemini Ultra API',
-  'Gemini Nano API',
-  'Gemini 1.5 API',
+  'Gemini API', 'Gemini API (Legacy)', 'Gemini Pro API',
+  'Gemini Ultra API', 'Gemini Nano API', 'Gemini 1.5 API',
   'Gemini 2.0 API (Preview)',
 ]
 
@@ -112,16 +97,14 @@ export default function RestrictionsModal({ onSubmit, addToast }) {
       return
     }
     if (!selected.has(correctApi)) {
-      addToast(`Error: The selected API restrictions do not include the required API for Gemini access.`, 'error')
+      addToast('Error: The selected API restrictions do not include the required API for Gemini access.', 'error')
       return
     }
     if (selected.size > 3) {
       addToast('Warning: Too many APIs selected. Please narrow your selection to 3 or fewer.', 'warning')
       return
     }
-    // Check if any deprecated Gemini API is selected
-    const hasDeprecated = geminiDecoys.some(d => selected.has(d))
-    if (hasDeprecated) {
+    if (geminiDecoys.some(d => selected.has(d))) {
       addToast('Error: One or more selected APIs are deprecated. Remove deprecated APIs and try again.', 'error')
       return
     }
@@ -133,7 +116,7 @@ export default function RestrictionsModal({ onSubmit, addToast }) {
       <div className="bg-white rounded-xl shadow-2xl border border-gborder w-[600px] max-h-[80vh] flex flex-col">
         <div className="p-6 border-b border-gborder">
           <h2 className="text-lg font-medium text-gdark">Select API Restrictions</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 mt-2">
             Choose which APIs this key can access. For Gemini, select the appropriate language API.
           </p>
         </div>
@@ -144,9 +127,9 @@ export default function RestrictionsModal({ onSubmit, addToast }) {
             placeholder="Filter APIs..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full border border-gborder rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gblue"
+            className="w-full border border-gborder rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gblue"
           />
-          <div className="text-xs text-gray-400 mt-1">
+          <div className="text-xs text-gray-400 mt-2">
             {selected.size} selected (max 3) · {filtered.length} shown
           </div>
         </div>
@@ -155,7 +138,7 @@ export default function RestrictionsModal({ onSubmit, addToast }) {
           {filtered.map(api => (
             <label
               key={api}
-              className={`flex items-center gap-2 py-1.5 px-2 rounded hover:bg-gray-50 cursor-pointer text-sm ${
+              className={`flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-50 cursor-pointer text-sm ${
                 selected.has(api) ? 'bg-blue-50' : ''
               }`}
             >
@@ -167,7 +150,7 @@ export default function RestrictionsModal({ onSubmit, addToast }) {
               />
               <span className="text-gray-700">{api}</span>
               {geminiDecoys.includes(api) && (
-                <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full ml-auto">
+                <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full ml-auto font-medium">
                   Deprecated
                 </span>
               )}
@@ -175,7 +158,7 @@ export default function RestrictionsModal({ onSubmit, addToast }) {
           ))}
         </div>
 
-        <div className="p-4 border-t border-gborder flex items-center justify-between bg-gray-50">
+        <div className="p-5 border-t border-gborder flex items-center justify-between bg-gray-50 rounded-b-xl">
           <span className="text-xs text-gray-400">
             Tip: "Gemini API" variants are deprecated. Look for the language API.
           </span>

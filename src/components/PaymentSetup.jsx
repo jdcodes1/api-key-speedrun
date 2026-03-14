@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Spinner } from '../lib/utils'
 
 export default function PaymentSetup({ onComplete, addToast }) {
   const [cardNumber, setCardNumber] = useState('')
@@ -38,7 +39,7 @@ export default function PaymentSetup({ onComplete, addToast }) {
     }
 
     setProcessing(true)
-    const delay = 10000 + Math.random() * 5000 // 10-15s
+    const delay = 10000 + Math.random() * 5000
 
     setTimeout(() => {
       setProcessing(false)
@@ -60,73 +61,65 @@ export default function PaymentSetup({ onComplete, addToast }) {
       <div className="bg-white rounded-xl shadow-2xl border border-gborder w-[480px]">
         <div className="p-6 border-b border-gborder">
           <h2 className="text-lg font-medium text-gdark">Set Up Payment Method</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 mt-2">
             A payment method is required to create API keys, even for free tier usage. You won't be charged.
           </p>
         </div>
 
-        <div className="p-6 space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700">
+        <div className="p-6 space-y-5">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3.5 text-xs text-blue-700">
             🔒 Your payment information is encrypted and secure. This is for verification only.
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gdark mb-1">Card number</label>
+            <label className="block text-sm font-medium text-gdark mb-1.5">Card number</label>
             <input
-              type="text"
-              value={cardNumber}
+              type="text" value={cardNumber}
               onChange={e => setCardNumber(formatCardNumber(e.target.value))}
-              placeholder="1234 5678 9012 3456"
-              disabled={processing}
+              placeholder="1234 5678 9012 3456" disabled={processing}
               className="w-full border border-gborder rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gblue font-mono"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gdark mb-1">Expiration</label>
+              <label className="block text-sm font-medium text-gdark mb-1.5">Expiration</label>
               <input
-                type="text"
-                value={expiry}
+                type="text" value={expiry}
                 onChange={e => setExpiry(formatExpiry(e.target.value))}
-                placeholder="MM/YY"
-                disabled={processing}
+                placeholder="MM/YY" disabled={processing}
                 className="w-full border border-gborder rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gblue font-mono"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gdark mb-1">CVC</label>
+              <label className="block text-sm font-medium text-gdark mb-1.5">CVC</label>
               <input
-                type="text"
-                value={cvc}
+                type="text" value={cvc}
                 onChange={e => setCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                placeholder="123"
-                disabled={processing}
+                placeholder="123" disabled={processing}
                 className="w-full border border-gborder rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gblue font-mono"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gdark mb-1">Cardholder name</label>
+            <label className="block text-sm font-medium text-gdark mb-1.5">Cardholder name</label>
             <input
-              type="text"
-              value={name}
+              type="text" value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Name on card"
-              disabled={processing}
+              placeholder="Name on card" disabled={processing}
               className="w-full border border-gborder rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gblue"
             />
           </div>
 
           {attempts > 0 && attempts < 2 && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3.5 text-sm text-red-700">
               Your card was declined. Please verify your details or try a different card.
             </div>
           )}
         </div>
 
-        <div className="p-4 border-t border-gborder flex items-center justify-end bg-gray-50">
+        <div className="p-5 border-t border-gborder flex items-center justify-end bg-gray-50 rounded-b-xl">
           <button
             onClick={handleSubmit}
             disabled={processing}
@@ -136,10 +129,7 @@ export default function PaymentSetup({ onComplete, addToast }) {
           >
             {processing ? (
               <span className="flex items-center gap-2">
-                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
+                <Spinner />
                 Verifying payment...
               </span>
             ) : 'Add payment method'}

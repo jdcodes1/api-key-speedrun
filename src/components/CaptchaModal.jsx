@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
+import { shuffle } from '../lib/utils'
+import { Spinner } from '../lib/utils'
 
 const themes = [
   {
@@ -45,15 +47,6 @@ const themes = [
   },
 ]
 
-function shuffle(arr) {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
-
 const TOTAL_ROUNDS = 3
 
 export default function CaptchaModal({ onComplete, addToast }) {
@@ -93,7 +86,6 @@ export default function CaptchaModal({ onComplete, addToast }) {
       } else {
         setLoading(true)
         addToast(`Round ${round + 1} passed! Loading next challenge...`, 'info')
-        // 3-5s delay between rounds
         setTimeout(() => {
           setRound(r => r + 1)
           setSelected(new Set())
@@ -108,14 +100,14 @@ export default function CaptchaModal({ onComplete, addToast }) {
 
   return (
     <div className="flex-1 flex items-center justify-center p-8">
-      <div className="bg-white rounded-xl shadow-2xl border border-gborder w-[400px]">
+      <div className="bg-white rounded-xl shadow-2xl border border-gborder w-[420px]">
         <div className="p-5 border-b border-gborder bg-gblue rounded-t-xl">
-          <h2 className="text-white font-medium">Verify you're not a robot</h2>
-          <div className="flex gap-1 mt-2">
+          <h2 className="text-white font-medium text-base">Verify you're not a robot</h2>
+          <div className="flex gap-1.5 mt-3">
             {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
               <div
                 key={i}
-                className={`h-1 flex-1 rounded-full ${
+                className={`h-1.5 flex-1 rounded-full ${
                   i < round ? 'bg-green-400' : i === round ? 'bg-white' : 'bg-blue-400/30'
                 }`}
               />
@@ -123,26 +115,23 @@ export default function CaptchaModal({ onComplete, addToast }) {
           </div>
         </div>
 
-        <div className="p-5">
-          <p className="text-sm text-gdark font-medium mb-3">
+        <div className="p-6">
+          <p className="text-sm text-gdark font-medium mb-2">
             Round {round + 1}/{TOTAL_ROUNDS}: Select all images containing <strong>{currentTheme.prompt}</strong>
           </p>
-          <p className="text-xs text-gray-400 mb-4">
+          <p className="text-xs text-gray-400 mb-5">
             Click on tiles that match the description.
           </p>
 
           {loading ? (
             <div className="h-[280px] flex items-center justify-center">
               <div className="text-center">
-                <svg className="animate-spin w-8 h-8 mx-auto text-gblue mb-2" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
+                <div className="mx-auto mb-3 text-gblue"><Spinner size="lg" /></div>
                 <p className="text-sm text-gray-500">Loading new images...</p>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="grid grid-cols-3 gap-2.5 mb-5">
               {grid.map((item, i) => (
                 <button
                   key={`${round}-${i}`}
@@ -162,7 +151,7 @@ export default function CaptchaModal({ onComplete, addToast }) {
           <button
             onClick={handleVerify}
             disabled={loading}
-            className={`w-full py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+            className={`w-full py-3 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
               loading ? 'bg-gray-200 text-gray-400' : 'bg-gblue text-white hover:bg-blue-600'
             }`}
           >

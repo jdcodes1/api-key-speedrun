@@ -3,7 +3,7 @@ import LandingPage from './components/LandingPage'
 import GameScreen from './components/GameScreen'
 import VictoryScreen from './components/VictoryScreen'
 import ToastManager from './components/ToastManager'
-import { fetchLeaderboard, saveScore, supabase } from './lib/supabase'
+import { fetchLeaderboard, saveScore, db } from './lib/neon'
 
 const LEADERBOARD_KEY = 'apikey-speedrun-leaderboard'
 
@@ -32,7 +32,7 @@ export default function App() {
 
   // Fetch leaderboard from Supabase on mount
   useEffect(() => {
-    if (supabase) {
+    if (db) {
       fetchLeaderboard().then(data => {
         if (data.length > 0) setLeaderboard(data)
       })
@@ -81,7 +81,7 @@ export default function App() {
     }
 
     // Save to Supabase if available
-    if (supabase) {
+    if (db) {
       await saveScore(name, elapsed)
       const fresh = await fetchLeaderboard()
       if (fresh.length > 0) {
@@ -99,7 +99,7 @@ export default function App() {
     setScreen('landing')
     setStartTime(null)
     setElapsed(0)
-    if (supabase) {
+    if (db) {
       const fresh = await fetchLeaderboard()
       if (fresh.length > 0) {
         setLeaderboard(fresh)

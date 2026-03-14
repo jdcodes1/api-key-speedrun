@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Spinner } from '../lib/utils'
 
 function generateCode() {
   return Math.floor(100000 + Math.random() * 900000).toString()
@@ -7,22 +8,22 @@ function generateCode() {
 export default function EmailVerification({ onComplete, addToast }) {
   const [code, setCode] = useState('')
   const [actualCode, setActualCode] = useState(() => generateCode())
-  const [codeExpired, setCodeExpired] = useState(true) // First code always "expires"
+  const [codeExpired, setCodeExpired] = useState(true)
   const [resent, setResent] = useState(false)
   const [showCodeToast, setShowCodeToast] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const toastTimeout = useRef(null)
 
-  // The first code "expires" immediately, requiring a resend
   useEffect(() => {
-    // Show a fake "code sent" toast
     addToast('Verification code sent to u***@gmail.com', 'info')
-    // After 5s show expiry
     const t = setTimeout(() => {
       addToast('Verification code expired. Please request a new code.', 'warning')
     }, 5000)
-    return () => clearTimeout(t)
-  }, [])
+    return () => {
+      clearTimeout(t)
+      if (toastTimeout.current) clearTimeout(toastTimeout.current)
+    }
+  }, [addToast])
 
   const handleResend = () => {
     if (resent) {
@@ -35,10 +36,8 @@ export default function EmailVerification({ onComplete, addToast }) {
     setActualCode(newCode)
     addToast('New verification code sent!', 'info')
 
-    // Show the code in a toast after 10s delay — easy to miss!
     toastTimeout.current = setTimeout(() => {
       setShowCodeToast(true)
-      // The code appears briefly in a notification
       addToast(`Security code: ${newCode} — expires in 60s`, 'info')
     }, 10000)
   }
@@ -68,24 +67,24 @@ export default function EmailVerification({ onComplete, addToast }) {
 
   return (
     <div className="flex-1 flex items-center justify-center p-8">
-      <div className="bg-white rounded-xl shadow-2xl border border-gborder w-[450px]">
+      <div className="bg-white rounded-xl shadow-2xl border border-gborder w-[460px]">
         <div className="p-6 border-b border-gborder">
           <h2 className="text-lg font-medium text-gdark">Verify Your Email</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 mt-2">
             For security, we need to verify your email before generating API keys.
           </p>
         </div>
 
-        <div className="p-6 space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700 flex items-center gap-2">
-            <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+        <div className="p-6 space-y-5">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-700 flex items-center gap-3">
+            <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
               <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
             </svg>
             Code sent to <strong>u***@gmail.com</strong>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gdark mb-1">Verification code</label>
+            <label className="block text-sm font-medium text-gdark mb-1.5">Verification code</label>
             <input
               type="text"
               value={code}
@@ -93,12 +92,12 @@ export default function EmailVerification({ onComplete, addToast }) {
               placeholder="Enter 6-digit code"
               maxLength={6}
               disabled={verifying}
-              className="w-full border border-gborder rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gblue text-center text-lg font-mono tracking-widest"
+              className="w-full border border-gborder rounded-lg px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-gblue text-center text-lg font-mono tracking-widest"
             />
           </div>
 
           {codeExpired && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-700">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3.5 text-sm text-yellow-700">
               Your verification code has expired. Please request a new one.
             </div>
           )}
@@ -107,7 +106,7 @@ export default function EmailVerification({ onComplete, addToast }) {
             <button
               onClick={handleResend}
               disabled={verifying}
-              className="text-gblue text-sm hover:underline cursor-pointer"
+              className="text-gblue text-sm font-medium hover:underline cursor-pointer py-1"
             >
               Resend code
             </button>
@@ -118,7 +117,7 @@ export default function EmailVerification({ onComplete, addToast }) {
           </div>
         </div>
 
-        <div className="p-4 border-t border-gborder flex items-center justify-end bg-gray-50">
+        <div className="p-5 border-t border-gborder flex items-center justify-end bg-gray-50 rounded-b-xl">
           <button
             onClick={handleVerify}
             disabled={verifying}
@@ -128,10 +127,7 @@ export default function EmailVerification({ onComplete, addToast }) {
           >
             {verifying ? (
               <span className="flex items-center gap-2">
-                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
+                <Spinner />
                 Verifying...
               </span>
             ) : 'Verify'}

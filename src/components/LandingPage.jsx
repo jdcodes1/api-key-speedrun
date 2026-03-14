@@ -1,12 +1,5 @@
 import { useState } from 'react'
-
-function formatTime(ms) {
-  const seconds = Math.floor(ms / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  const centis = Math.floor((ms % 1000) / 10)
-  return `${minutes}:${String(secs).padStart(2, '0')}.${String(centis).padStart(2, '0')}`
-}
+import { formatTime } from '../lib/utils'
 
 function getMedal(i) {
   if (i === 0) return '🥇'

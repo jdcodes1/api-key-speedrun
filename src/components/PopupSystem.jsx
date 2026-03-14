@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 
 // Welcome tutorial steps
 const tutorialSteps = [
@@ -275,7 +275,6 @@ function ChatWidget({ onDismiss }) {
 // Popup scheduler
 export default function PopupSystem({ active }) {
   const [showTutorial, setShowTutorial] = useState(true)
-  const [tutorialDone, setTutorialDone] = useState(false)
   const [popups, setPopups] = useState({
     survey: false,
     session: false,
@@ -284,12 +283,11 @@ export default function PopupSystem({ active }) {
     spotlight: false,
     chat: false,
   })
-  const timers = useRef([])
 
   useEffect(() => {
-    if (!active || !tutorialDone) return
+    if (!active || showTutorial) return
 
-    // Schedule popups at various intervals
+    const localTimers = []
     const schedule = [
       { key: 'spotlight', delay: 30000 + Math.random() * 15000 },
       { key: 'session', delay: 45000 + Math.random() * 15000 },
@@ -303,11 +301,11 @@ export default function PopupSystem({ active }) {
       const t = setTimeout(() => {
         setPopups(p => ({ ...p, [key]: true }))
       }, delay)
-      timers.current.push(t)
+      localTimers.push(t)
     })
 
-    return () => timers.current.forEach(clearTimeout)
-  }, [active, tutorialDone])
+    return () => localTimers.forEach(clearTimeout)
+  }, [active, showTutorial])
 
   if (!active) return null
 
@@ -316,10 +314,7 @@ export default function PopupSystem({ active }) {
   return (
     <>
       {showTutorial && (
-        <WelcomeTutorial onDismiss={() => {
-          setShowTutorial(false)
-          setTutorialDone(true)
-        }} />
+        <WelcomeTutorial onDismiss={() => setShowTutorial(false)} />
       )}
       {popups.survey && <SurveyPopup onDismiss={() => dismiss('survey')} />}
       {popups.session && <SessionWarning onDismiss={() => dismiss('session')} />}
