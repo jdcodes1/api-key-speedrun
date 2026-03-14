@@ -1,23 +1,48 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 
-// Generate a grid of abstract images with descriptions
-const imagePool = [
-  { emoji: '🔑', label: 'key' },
-  { emoji: '🗝️', label: 'key' },
-  { emoji: '🔐', label: 'lock' },
-  { emoji: '🔒', label: 'lock' },
-  { emoji: '🔓', label: 'lock' },
-  { emoji: '📊', label: 'chart' },
-  { emoji: '📈', label: 'chart' },
-  { emoji: '🎨', label: 'art' },
-  { emoji: '🖼️', label: 'art' },
-  { emoji: '🔧', label: 'tool' },
-  { emoji: '⚙️', label: 'gear' },
-  { emoji: '💻', label: 'computer' },
-  { emoji: '🖥️', label: 'computer' },
-  { emoji: '📱', label: 'phone' },
-  { emoji: '☁️', label: 'cloud' },
-  { emoji: '🌐', label: 'globe' },
+const themes = [
+  {
+    prompt: 'API keys',
+    targetLabel: 'key',
+    imagePool: [
+      { emoji: '🔑', label: 'key' }, { emoji: '🗝️', label: 'key' },
+      { emoji: '🔐', label: 'lock' }, { emoji: '🔒', label: 'lock' },
+      { emoji: '🔓', label: 'lock' }, { emoji: '📊', label: 'chart' },
+      { emoji: '📈', label: 'chart' }, { emoji: '🎨', label: 'art' },
+      { emoji: '🖼️', label: 'art' }, { emoji: '🔧', label: 'tool' },
+      { emoji: '⚙️', label: 'gear' }, { emoji: '💻', label: 'computer' },
+      { emoji: '🖥️', label: 'computer' }, { emoji: '📱', label: 'phone' },
+      { emoji: '☁️', label: 'cloud' }, { emoji: '🌐', label: 'globe' },
+    ],
+  },
+  {
+    prompt: 'clouds',
+    targetLabel: 'cloud',
+    imagePool: [
+      { emoji: '☁️', label: 'cloud' }, { emoji: '🌤️', label: 'cloud' },
+      { emoji: '⛅', label: 'cloud' }, { emoji: '🌥️', label: 'cloud' },
+      { emoji: '🌧️', label: 'rain' }, { emoji: '⛈️', label: 'storm' },
+      { emoji: '🌈', label: 'rainbow' }, { emoji: '❄️', label: 'snow' },
+      { emoji: '🌊', label: 'wave' }, { emoji: '🔥', label: 'fire' },
+      { emoji: '💨', label: 'wind' }, { emoji: '🌀', label: 'cyclone' },
+      { emoji: '☀️', label: 'sun' }, { emoji: '🌙', label: 'moon' },
+      { emoji: '⭐', label: 'star' }, { emoji: '🌍', label: 'earth' },
+    ],
+  },
+  {
+    prompt: 'locks',
+    targetLabel: 'lock',
+    imagePool: [
+      { emoji: '🔒', label: 'lock' }, { emoji: '🔓', label: 'lock' },
+      { emoji: '🔐', label: 'lock' }, { emoji: '🔑', label: 'key' },
+      { emoji: '🗝️', label: 'key' }, { emoji: '🛡️', label: 'shield' },
+      { emoji: '⚔️', label: 'sword' }, { emoji: '🏰', label: 'castle' },
+      { emoji: '🚪', label: 'door' }, { emoji: '🪟', label: 'window' },
+      { emoji: '📦', label: 'box' }, { emoji: '💎', label: 'gem' },
+      { emoji: '🎯', label: 'target' }, { emoji: '🔔', label: 'bell' },
+      { emoji: '📌', label: 'pin' }, { emoji: '🧲', label: 'magnet' },
+    ],
+  },
 ]
 
 function shuffle(arr) {
@@ -29,17 +54,24 @@ function shuffle(arr) {
   return a
 }
 
-export default function CaptchaModal({ onComplete, addToast }) {
-  const grid = useMemo(() => shuffle(imagePool).slice(0, 9), [])
-  const [selected, setSelected] = useState(new Set())
-  const [attempts, setAttempts] = useState(0)
+const TOTAL_ROUNDS = 3
 
-  // The "correct" answer: select only the key emojis
+export default function CaptchaModal({ onComplete, addToast }) {
+  const [round, setRound] = useState(0)
+  const [selected, setSelected] = useState(new Set())
+  const [loading, setLoading] = useState(false)
+
+  const roundThemes = useMemo(() => shuffle(themes).slice(0, TOTAL_ROUNDS), [])
+
+  const currentTheme = roundThemes[round] || roundThemes[0]
+  const grid = useMemo(() => shuffle(currentTheme.imagePool).slice(0, 9), [round, currentTheme])
+
   const correctIndices = grid
-    .map((item, i) => item.label === 'key' ? i : -1)
+    .map((item, i) => item.label === currentTheme.targetLabel ? i : -1)
     .filter(i => i !== -1)
 
   const toggle = (idx) => {
+    if (loading) return
     setSelected(prev => {
       const next = new Set(prev)
       if (next.has(idx)) next.delete(idx)
@@ -48,70 +80,94 @@ export default function CaptchaModal({ onComplete, addToast }) {
     })
   }
 
-  const handleVerify = () => {
+  const handleVerify = useCallback(() => {
     const selectedArr = [...selected].sort()
-    const correct = correctIndices.sort()
+    const correct = [...correctIndices].sort()
     const isCorrect = selectedArr.length === correct.length &&
       selectedArr.every((v, i) => v === correct[i])
 
     if (isCorrect) {
-      onComplete()
-    } else {
-      setAttempts(a => a + 1)
-      if (attempts >= 1) {
-        // After 2 failures, let them through anyway
-        addToast('Verification passed (with reduced confidence).', 'warning')
-        setTimeout(onComplete, 1000)
+      if (round + 1 >= TOTAL_ROUNDS) {
+        addToast('Verification complete!', 'success')
+        onComplete()
       } else {
-        addToast('Incorrect selection. Please try again.', 'error')
-        setSelected(new Set())
+        setLoading(true)
+        addToast(`Round ${round + 1} passed! Loading next challenge...`, 'info')
+        // 3-5s delay between rounds
+        setTimeout(() => {
+          setRound(r => r + 1)
+          setSelected(new Set())
+          setLoading(false)
+        }, 3000 + Math.random() * 2000)
       }
+    } else {
+      addToast('Incorrect selection. Please try again.', 'error')
+      setSelected(new Set())
     }
-  }
+  }, [selected, correctIndices, round, onComplete, addToast])
 
   return (
     <div className="flex-1 flex items-center justify-center p-8">
       <div className="bg-white rounded-xl shadow-2xl border border-gborder w-[400px]">
         <div className="p-5 border-b border-gborder bg-gblue rounded-t-xl">
           <h2 className="text-white font-medium">Verify you're not a robot</h2>
+          <div className="flex gap-1 mt-2">
+            {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-1 flex-1 rounded-full ${
+                  i < round ? 'bg-green-400' : i === round ? 'bg-white' : 'bg-blue-400/30'
+                }`}
+              />
+            ))}
+          </div>
         </div>
 
         <div className="p-5">
           <p className="text-sm text-gdark font-medium mb-3">
-            Select all images containing <strong>API keys</strong>
+            Round {round + 1}/{TOTAL_ROUNDS}: Select all images containing <strong>{currentTheme.prompt}</strong>
           </p>
           <p className="text-xs text-gray-400 mb-4">
-            Click on tiles that represent keys or key-like objects.
+            Click on tiles that match the description.
           </p>
 
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            {grid.map((item, i) => (
-              <button
-                key={i}
-                onClick={() => toggle(i)}
-                className={`w-full aspect-square rounded-lg border-2 flex items-center justify-center text-3xl transition-all cursor-pointer ${
-                  selected.has(i)
-                    ? 'border-gblue bg-blue-50 ring-2 ring-gblue/30'
-                    : 'border-gborder hover:border-gray-400 bg-gray-50'
-                }`}
-              >
-                {item.emoji}
-              </button>
-            ))}
-          </div>
+          {loading ? (
+            <div className="h-[280px] flex items-center justify-center">
+              <div className="text-center">
+                <svg className="animate-spin w-8 h-8 mx-auto text-gblue mb-2" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <p className="text-sm text-gray-500">Loading new images...</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {grid.map((item, i) => (
+                <button
+                  key={`${round}-${i}`}
+                  onClick={() => toggle(i)}
+                  className={`w-full aspect-square rounded-lg border-2 flex items-center justify-center text-3xl transition-all cursor-pointer ${
+                    selected.has(i)
+                      ? 'border-gblue bg-blue-50 ring-2 ring-gblue/30'
+                      : 'border-gborder hover:border-gray-400 bg-gray-50'
+                  }`}
+                >
+                  {item.emoji}
+                </button>
+              ))}
+            </div>
+          )}
 
           <button
             onClick={handleVerify}
-            className="w-full bg-gblue text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+            disabled={loading}
+            className={`w-full py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+              loading ? 'bg-gray-200 text-gray-400' : 'bg-gblue text-white hover:bg-blue-600'
+            }`}
           >
             Verify
           </button>
-
-          {attempts > 0 && (
-            <p className="text-xs text-gray-400 mt-2 text-center">
-              Attempt {attempts + 1}. Select only the key/key-shaped items.
-            </p>
-          )}
         </div>
       </div>
     </div>

@@ -54,7 +54,7 @@ export default function LandingPage({ leaderboard, onStart }) {
               </h1>
               <p className="text-lg text-blue-100 mb-8 max-w-lg leading-relaxed">
                 Navigate a labyrinth of menus, modals, and dark patterns to generate
-                a (totally fake) API key. Your time is tracked. The leaderboard is watching.
+                a (totally fake) API key. Your time is tracked. The global leaderboard is watching.
               </p>
               <div className="flex items-center gap-4">
                 <button
@@ -111,6 +111,7 @@ export default function LandingPage({ leaderboard, onStart }) {
                   <li className="flex items-start gap-2"><span className="text-gyellow mt-0.5">⚠</span> The UI is intentionally confusing — that's the point</li>
                   <li className="flex items-start gap-2"><span className="text-ggreen mt-0.5">✓</span> Timer stops when you successfully generate the key</li>
                   <li className="flex items-start gap-2"><span className="text-gblue-300 mt-0.5">ℹ</span> No real API keys are created. This is entirely a parody.</li>
+                  <li className="flex items-start gap-2"><span className="text-gyellow mt-0.5">⚠</span> Every run is randomized — memorizing won't help!</li>
                 </ul>
               </div>
             </div>
@@ -133,7 +134,7 @@ export default function LandingPage({ leaderboard, onStart }) {
             </div>
             <div className="w-px h-8 bg-gborder"></div>
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-light text-gdark">8</span>
+              <span className="text-2xl font-light text-gdark">14</span>
               <span className="text-sm text-gray-500">Trap Stages</span>
             </div>
           </div>
@@ -143,21 +144,19 @@ export default function LandingPage({ leaderboard, onStart }) {
         <div style={{ maxWidth: '1024px', margin: '0 auto', padding: '40px 32px' }} className="w-full">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-normal text-gdark">Leaderboard</h2>
-              <p className="text-sm text-gray-500 mt-0.5">Fastest API key generations</p>
+              <h2 className="text-xl font-normal text-gdark">Global Leaderboard</h2>
+              <p className="text-sm text-gray-500 mt-0.5">Fastest API key generations worldwide</p>
             </div>
           </div>
 
           {leaderboard.length > 0 ? (
             <div className="border border-gborder rounded-lg overflow-hidden">
-              {/* Table header */}
               <div className="bg-gsidebar grid grid-cols-[60px_1fr_140px_120px] px-4 py-2.5 text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gborder">
                 <span>Rank</span>
                 <span>Name</span>
                 <span>Time</span>
                 <span>Date</span>
               </div>
-              {/* Table rows */}
               {leaderboard.slice(0, 10).map((entry, i) => (
                 <div
                   key={i}

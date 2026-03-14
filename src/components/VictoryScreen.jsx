@@ -13,11 +13,14 @@ const FAKE_KEY = 'AIzaSy-LMAO-th1s-1s-n0t-r3al-n1c3-try-' + Math.random().toStri
 export default function VictoryScreen({ elapsed, leaderboard, onSaveScore, onPlayAgain }) {
   const [name, setName] = useState('')
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const handleSave = () => {
-    if (!name.trim()) return
-    onSaveScore(name.trim())
+  const handleSave = async () => {
+    if (!name.trim() || saving) return
+    setSaving(true)
+    await onSaveScore(name.trim())
+    setSaving(false)
     setSaved(true)
   }
 
@@ -73,7 +76,7 @@ export default function VictoryScreen({ elapsed, leaderboard, onSaveScore, onPla
                 {formatTime(elapsed)}
               </div>
               <p className="text-sm text-gray-400">
-                {elapsed < 60000 ? 'Incredible speed!' : elapsed < 120000 ? 'Well done!' : 'Room for improvement!'}
+                {elapsed < 180000 ? 'Speed demon!' : elapsed < 360000 ? 'Well done!' : elapsed < 600000 ? 'Not bad!' : 'Room for improvement!'}
               </p>
             </div>
           </div>
@@ -81,7 +84,7 @@ export default function VictoryScreen({ elapsed, leaderboard, onSaveScore, onPla
           {/* Save score card */}
           <div className="border border-gborder rounded-lg overflow-hidden">
             <div className="bg-gsidebar px-6 py-3 border-b border-gborder">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Save to Leaderboard</span>
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Save to Global Leaderboard</span>
             </div>
             <div className="p-6">
               {!saved ? (
@@ -97,9 +100,12 @@ export default function VictoryScreen({ elapsed, leaderboard, onSaveScore, onPla
                   />
                   <button
                     onClick={handleSave}
-                    className="w-full bg-gblue text-white px-6 py-2.5 rounded text-sm font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+                    disabled={saving}
+                    className={`w-full px-6 py-2.5 rounded text-sm font-medium transition-colors cursor-pointer ${
+                      saving ? 'bg-gray-300 text-gray-500' : 'bg-gblue text-white hover:bg-blue-600'
+                    }`}
                   >
-                    Save Score
+                    {saving ? 'Saving...' : 'Save Score'}
                   </button>
                 </div>
               ) : (
@@ -107,7 +113,7 @@ export default function VictoryScreen({ elapsed, leaderboard, onSaveScore, onPla
                   <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                   </svg>
-                  Score saved to leaderboard!
+                  Score saved to global leaderboard!
                 </div>
               )}
             </div>

@@ -6,17 +6,23 @@ import DeprecatedPage from './DeprecatedPage'
 import CredentialsPage from './CredentialsPage'
 import TosModal from './TosModal'
 import BillingModal from './BillingModal'
+import PaymentSetup from './PaymentSetup'
+import RegionSelector from './RegionSelector'
 import RestrictionsModal from './RestrictionsModal'
+import QuotaRequest from './QuotaRequest'
 import CaptchaModal from './CaptchaModal'
+import EmailVerification from './EmailVerification'
 import GenerateKeyPage from './GenerateKeyPage'
 import CookieBanner from './CookieBanner'
 import FakeLoading from './FakeLoading'
+import PopupSystem from './PopupSystem'
 
 /*
   Game state machine:
-  PROJECT_SELECT → SIDEBAR_NAV → (wrong path: DEPRECATED_PAGE) → CREDENTIALS_PAGE
-  → TOS_MODAL → BILLING_MODAL → RESTRICTIONS_MODAL → CAPTCHA
-  → GENERATE_KEY (3 attempts) → VICTORY
+  WELCOME_TUTORIAL → PROJECT_SELECT → SIDEBAR_NAV → (wrong path: DEPRECATED_PAGE) → CREDENTIALS_PAGE
+  → TOS_MODAL → BILLING_MODAL → (PAYMENT_SETUP if needed)
+  → REGION_SELECTOR → RESTRICTIONS_MODAL → QUOTA_REQUEST
+  → CAPTCHA → EMAIL_VERIFICATION → GENERATE_KEY → VICTORY
 */
 
 function formatTimer(ms) {
@@ -35,6 +41,7 @@ export default function GameScreen({ elapsed, onVictory, addToast }) {
   const [loading, setLoading] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
   const [generateAttempts, setGenerateAttempts] = useState(0)
+  const [correctProjectId, setCorrectProjectId] = useState(null)
   const toastInterval = useRef(null)
 
   // Spam random toasts during gameplay
@@ -50,14 +57,17 @@ export default function GameScreen({ elapsed, onVictory, addToast }) {
       { msg: 'Survey: How would you rate your experience?', type: 'info' },
       { msg: 'Reminder: Enable 2FA for your account', type: 'warning' },
       { msg: 'Cloud Functions v3 is in preview!', type: 'info' },
+      { msg: 'Your API key rotation is overdue', type: 'warning' },
+      { msg: 'New: Vertex AI Model Garden now available', type: 'info' },
+      { msg: 'Action required: Verify your identity', type: 'error' },
+      { msg: 'Performance tip: Enable CDN for static assets', type: 'info' },
     ]
     const fire = () => {
       const pick = messages[Math.floor(Math.random() * messages.length)]
       addToast(pick.msg, pick.type)
     }
-    // First one after 8s, then random intervals
     const firstTimeout = setTimeout(fire, 8000)
-    toastInterval.current = setInterval(fire, 12000 + Math.random() * 10000)
+    toastInterval.current = setInterval(fire, 10000 + Math.random() * 8000)
     return () => {
       clearTimeout(firstTimeout)
       clearInterval(toastInterval.current)
@@ -87,24 +97,29 @@ export default function GameScreen({ elapsed, onVictory, addToast }) {
   }, [step])
 
   const handleProjectSelect = (projectId) => {
-    if (projectId === 'my-project-1-prod-v2') {
-      doFakeLoad('Switching project...', 2000, () => {
-        setShowProjectSelector(false)
-        setStep('SIDEBAR_NAV')
-        addToast('Project selected: my-project-1-prod-v2', 'success')
-      })
-    } else {
-      addToast('APIs not enabled for this project. Select a different project.', 'error')
-    }
+    // ProjectSelector now handles randomization internally
+    // Any projectId passed is accepted — we just store it and proceed
+    // But we need to know if it's the "correct" one
+    // The ProjectSelector calls onSelect only when clicked, we accept it
+    // and store it. The correctness is handled by ProjectSelector's internal state
+    // Since we can't easily get correctId from ProjectSelector,
+    // we'll use a different approach: ProjectSelector always calls onSelect with the clicked id
+    // and GameScreen just accepts it (the ProjectSelector will show error toasts for wrong ones)
+    setCorrectProjectId(projectId)
+    doFakeLoad('Switching project...', 3000, () => {
+      setShowProjectSelector(false)
+      setStep('SIDEBAR_NAV')
+      addToast(`Project selected: ${projectId}`, 'success')
+    })
   }
 
   const handleSidebarNav = (item) => {
     if (item === 'api-keys-deprecated') {
-      doFakeLoad('Loading API Keys...', 1500, () => {
+      doFakeLoad('Loading API Keys...', 2500, () => {
         setStep('DEPRECATED_PAGE')
       })
     } else if (item === 'credentials') {
-      doFakeLoad('Loading Credentials...', 2500, () => {
+      doFakeLoad('Loading Credentials...', 4000, () => {
         setStep('CREDENTIALS_PAGE')
       })
     } else if (item === 'ai-studio') {
@@ -118,31 +133,60 @@ export default function GameScreen({ elapsed, onVictory, addToast }) {
   }
 
   const handleCreateCredential = () => {
-    doFakeLoad('Preparing credential creation...', 2000, () => {
+    doFakeLoad('Preparing credential creation...', 3000, () => {
       setStep('TOS_MODAL')
     })
   }
 
   const handleTosAccept = () => {
-    doFakeLoad('Verifying agreement...', 1500, () => {
+    doFakeLoad('Verifying agreement...', 2500, () => {
       setStep('BILLING_MODAL')
     })
   }
 
   const handleBillingConfirm = () => {
-    doFakeLoad('Validating billing account...', 2000, () => {
+    doFakeLoad('Validating billing account...', 3000, () => {
+      setStep('REGION_SELECTOR')
+    })
+  }
+
+  const handlePaymentRequired = () => {
+    setStep('PAYMENT_SETUP')
+  }
+
+  const handlePaymentComplete = () => {
+    doFakeLoad('Updating billing records...', 2000, () => {
+      setStep('BILLING_MODAL')
+      addToast('Payment method added. Please select a billing account.', 'info')
+    })
+  }
+
+  const handleRegionSelect = () => {
+    doFakeLoad('Provisioning in selected region...', 3000, () => {
       setStep('RESTRICTIONS_MODAL')
     })
   }
 
   const handleRestrictionsSubmit = () => {
-    doFakeLoad('Applying API restrictions...', 1800, () => {
+    doFakeLoad('Applying API restrictions...', 3000, () => {
+      setStep('QUOTA_REQUEST')
+    })
+  }
+
+  const handleQuotaComplete = () => {
+    doFakeLoad('Allocating quota...', 2000, () => {
       setStep('CAPTCHA')
     })
   }
 
   const handleCaptchaComplete = () => {
-    doFakeLoad('Verifying humanity...', 2500, () => {
+    doFakeLoad('Verifying humanity...', 3000, () => {
+      setStep('EMAIL_VERIFICATION')
+    })
+  }
+
+  const handleEmailVerified = () => {
+    doFakeLoad('Finalizing verification...', 2000, () => {
       setStep('GENERATE_KEY')
     })
   }
@@ -151,15 +195,27 @@ export default function GameScreen({ elapsed, onVictory, addToast }) {
     const attempt = generateAttempts + 1
     setGenerateAttempts(attempt)
 
-    if (attempt === 1) {
-      addToast('Error: Required field missing. Check all required fields.', 'error')
-    } else if (attempt === 2) {
+    if (attempt < 4) {
+      // First 3 attempts fail with different errors
+      const errors = [
+        'Error: Quota exceeded for this project. Please wait and retry.',
+        'Error: Region unavailable. Retrying with fallback region...',
+        'Session expired. Re-authenticating...',
+      ]
+      const errorMsg = errors[(attempt - 1) % errors.length]
+      doFakeLoad('Generating API key...', 5000 + Math.random() * 3000, () => {
+        addToast(errorMsg, 'error')
+        if (attempt === 3) {
+          // Send back to restrictions on 3rd fail
+          setStep('RESTRICTIONS_MODAL')
+        }
+      })
+    } else if (attempt === 4) {
       doFakeLoad('Generating API key...', 5000, () => {
-        addToast('Session expired. Please re-authenticate.', 'error')
-        setStep('RESTRICTIONS_MODAL')
+        addToast('Error: Permission denied. Retrying with elevated privileges...', 'error')
       })
     } else {
-      doFakeLoad('Generating API key...', 3000, () => {
+      doFakeLoad('Generating API key...', 4000, () => {
         onVictory()
       })
     }
@@ -179,6 +235,7 @@ export default function GameScreen({ elapsed, onVictory, addToast }) {
             <ProjectSelector
               open={showProjectSelector}
               onSelect={handleProjectSelect}
+              addToast={addToast}
             />
           </div>
         )
@@ -211,7 +268,23 @@ export default function GameScreen({ elapsed, onVictory, addToast }) {
       case 'BILLING_MODAL':
         return (
           <div className="flex-1 bg-glight">
-            <BillingModal onConfirm={handleBillingConfirm} addToast={addToast} />
+            <BillingModal
+              onConfirm={handleBillingConfirm}
+              onPaymentRequired={handlePaymentRequired}
+              addToast={addToast}
+            />
+          </div>
+        )
+      case 'PAYMENT_SETUP':
+        return (
+          <div className="flex-1 bg-glight">
+            <PaymentSetup onComplete={handlePaymentComplete} addToast={addToast} />
+          </div>
+        )
+      case 'REGION_SELECTOR':
+        return (
+          <div className="flex-1 bg-glight">
+            <RegionSelector onSelect={handleRegionSelect} addToast={addToast} />
           </div>
         )
       case 'RESTRICTIONS_MODAL':
@@ -223,10 +296,22 @@ export default function GameScreen({ elapsed, onVictory, addToast }) {
             />
           </div>
         )
+      case 'QUOTA_REQUEST':
+        return (
+          <div className="flex-1 bg-glight">
+            <QuotaRequest onComplete={handleQuotaComplete} addToast={addToast} />
+          </div>
+        )
       case 'CAPTCHA':
         return (
           <div className="flex-1 bg-glight">
             <CaptchaModal onComplete={handleCaptchaComplete} addToast={addToast} />
+          </div>
+        )
+      case 'EMAIL_VERIFICATION':
+        return (
+          <div className="flex-1 bg-glight">
+            <EmailVerification onComplete={handleEmailVerified} addToast={addToast} />
           </div>
         )
       case 'GENERATE_KEY':
@@ -234,6 +319,7 @@ export default function GameScreen({ elapsed, onVictory, addToast }) {
           <GenerateKeyPage
             attempts={generateAttempts}
             onGenerate={handleGenerateAttempt}
+            onRestart={() => setStep('RESTRICTIONS_MODAL')}
             addToast={addToast}
           />
         )
@@ -262,6 +348,7 @@ export default function GameScreen({ elapsed, onVictory, addToast }) {
       {showCookieBanner && (
         <CookieBanner onAccept={() => setShowCookieBanner(false)} />
       )}
+      <PopupSystem active={step !== 'PROJECT_SELECT'} />
     </div>
   )
 }

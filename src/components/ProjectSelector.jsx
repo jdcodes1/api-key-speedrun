@@ -1,40 +1,59 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
-const projects = [
-  { id: 'my-project-1', name: 'my-project-1', org: 'My Organization' },
-  { id: 'my-project-01', name: 'my-project-01', org: 'My Organization' },
-  { id: 'my-project-1-dev', name: 'my-project-1-dev', org: 'My Organization' },
-  { id: 'my-project-1-staging', name: 'my-project-1-staging', org: 'My Organization' },
-  { id: 'my-project-1-prod', name: 'my-project-1-prod', org: 'My Organization' },
-  { id: 'my-project-1-prod-copy', name: 'my-project-1-prod-copy', org: 'My Organization' },
-  { id: 'my-project-1-prod-old', name: 'my-project-1-prod-old', org: 'My Organization' },
-  { id: 'my-project-1-prod-backup', name: 'my-project-1-prod-backup', org: 'My Organization' },
-  { id: 'my-project-1-test', name: 'my-project-1-test', org: 'My Organization' },
-  { id: 'my-project-1-temp', name: 'my-project-1-temp', org: 'My Organization' },
-  { id: 'my-project-1-archive', name: 'my-project-1-archive', org: 'My Organization' },
-  { id: 'my-project-2', name: 'my-project-2', org: 'My Organization' },
-  { id: 'my-project-1-prod-v2', name: 'my-project-1-prod-v2', org: 'My Organization' },
-  { id: 'my-project-1-PROD', name: 'my-project-1-PROD', org: 'Other Org' },
-  { id: 'my-project-11', name: 'my-project-11', org: 'Other Org' },
-  { id: 'my-project-1-final', name: 'my-project-1-final', org: 'My Organization' },
-  { id: 'my-project-1-final-final', name: 'my-project-1-final-final', org: 'My Organization' },
+function shuffle(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+const allProjects = [
+  'my-project-1', 'my-project-01', 'my-project-1-dev', 'my-project-1-staging',
+  'my-project-1-prod', 'my-project-1-prod-copy', 'my-project-1-prod-old',
+  'my-project-1-prod-backup', 'my-project-1-test', 'my-project-1-temp',
+  'my-project-1-archive', 'my-project-2', 'my-project-1-prod-v2',
+  'my-project-1-PROD', 'my-project-11', 'my-project-1-final',
+  'my-project-1-final-final', 'my-project-1-canary', 'my-project-1-beta',
+  'my-project-1-alpha', 'my-project-1-release', 'my-project-1-hotfix',
+  'my-project-1-migration', 'my-project-1-legacy', 'my-project-01-prod',
+  'my-project-1-v3', 'my-project-1-stable', 'my-project-1-nightly',
+  'my-project-1-sandbox', 'my-project-1-demo', 'my-project-1-qa',
+  'my-project-1-uat', 'my-project-1-perf', 'my-project-1-dr',
 ]
 
-const recentProjects = projects.slice(0, 5) // None of the recent ones are correct
+const orgs = ['My Organization', 'Other Org', 'Personal', 'Shared Org']
 
-export default function ProjectSelector({ open, onSelect }) {
+export default function ProjectSelector({ open, onSelect, addToast }) {
+  const { projects, correctId, recentProjects, starredProjects } = useMemo(() => {
+    const shuffled = shuffle(allProjects)
+    // Pick a random project as the correct one
+    const correctIdx = Math.floor(Math.random() * shuffled.length)
+    const correct = shuffled[correctIdx]
+    const projectList = shuffled.map(id => ({
+      id,
+      name: id,
+      org: orgs[Math.floor(Math.random() * orgs.length)]
+    }))
+    // Recent tab: 5 random projects, none correct
+    const wrongOnes = projectList.filter(p => p.id !== correct)
+    const recent = shuffle(wrongOnes).slice(0, 5)
+    // Starred tab: 4 random wrong projects
+    const starred = shuffle(wrongOnes.filter(p => !recent.includes(p))).slice(0, 4)
+    return { projects: projectList, correctId: correct, recentProjects: recent, starredProjects: starred }
+  }, [])
+
   const [search, setSearch] = useState('')
-  const [tab, setTab] = useState('recent') // recent | all
+  const [tab, setTab] = useState('recent') // recent | starred | all
 
   if (!open) return null
 
-  const filtered = tab === 'recent'
-    ? recentProjects.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
-    : projects.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+  const source = tab === 'recent' ? recentProjects : tab === 'starred' ? starredProjects : projects
+  const filtered = source.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
     <div className="bg-white rounded-xl shadow-2xl border border-gborder w-[500px] max-h-[600px] flex flex-col">
-      {/* Header */}
       <div className="p-4 border-b border-gborder">
         <h2 className="text-lg font-medium text-gdark mb-3">Select a project</h2>
         <input
@@ -46,27 +65,20 @@ export default function ProjectSelector({ open, onSelect }) {
         />
       </div>
 
-      {/* Tabs */}
       <div className="flex border-b border-gborder">
-        <button
-          onClick={() => setTab('recent')}
-          className={`flex-1 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
-            tab === 'recent' ? 'text-gblue border-b-2 border-gblue' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Recent
-        </button>
-        <button
-          onClick={() => setTab('all')}
-          className={`flex-1 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
-            tab === 'all' ? 'text-gblue border-b-2 border-gblue' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          All ({projects.length})
-        </button>
+        {['recent', 'starred', 'all'].map(t => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`flex-1 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+              tab === t ? 'text-gblue border-b-2 border-gblue' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {t === 'recent' ? 'Recent' : t === 'starred' ? '⭐ Starred' : `All (${projects.length})`}
+          </button>
+        ))}
       </div>
 
-      {/* Project list */}
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 ? (
           <div className="p-8 text-center text-gray-400 text-sm">No projects found</div>
@@ -74,7 +86,13 @@ export default function ProjectSelector({ open, onSelect }) {
           filtered.map(project => (
             <button
               key={project.id}
-              onClick={() => onSelect(project.id)}
+              onClick={() => {
+                if (project.id === correctId) {
+                  onSelect(project.id)
+                } else {
+                  addToast('APIs not enabled for this project. Select a different project.', 'error')
+                }
+              }}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gborder/50 text-left cursor-pointer"
             >
               <div className="w-8 h-8 rounded bg-glight flex items-center justify-center text-xs text-gray-500 font-mono">
@@ -90,7 +108,6 @@ export default function ProjectSelector({ open, onSelect }) {
         )}
       </div>
 
-      {/* Hint text at bottom */}
       <div className="p-3 border-t border-gborder bg-gray-50 text-xs text-gray-400 text-center">
         Only projects with Generative Language API enabled can create API keys.
         <br/>
@@ -99,3 +116,4 @@ export default function ProjectSelector({ open, onSelect }) {
     </div>
   )
 }
+
