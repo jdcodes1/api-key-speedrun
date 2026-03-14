@@ -22,7 +22,7 @@ export async function fetchLeaderboard() {
     return rows.map(row => ({
       name: row.name,
       time_ms: row.time_ms,
-      date: row.created_at?.split('T')[0] || ''
+      date: row.created_at ? new Date(row.created_at).toISOString().split('T')[0] : ''
     }))
   } catch (err) {
     console.error('Leaderboard fetch error:', err)
