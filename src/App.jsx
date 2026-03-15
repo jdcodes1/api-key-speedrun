@@ -4,6 +4,7 @@ import GameScreen from './components/GameScreen'
 import VictoryScreen from './components/VictoryScreen'
 import ToastManager from './components/ToastManager'
 import { fetchLeaderboard, saveScore, db } from './lib/neon'
+import { Analytics } from '@vercel/analytics/react'
 
 const LEADERBOARD_KEY = 'apikey-speedrun-leaderboard'
 
@@ -130,6 +131,7 @@ export default function App() {
         />
       )}
       <ToastManager toasts={toasts} onDismiss={removeToast} />
+      <Analytics />
     </div>
   )
 }
